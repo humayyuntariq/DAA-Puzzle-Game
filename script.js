@@ -41,7 +41,7 @@ function renderCoins() {
 
     coins.forEach((side, i) => {
         const img = document.createElement('img');
-            imgs[i].src = `assets/${coins[i]}.png`;
+        img.src = `assets/${side}.png`;
         img.classList.add('coin');
         img.setAttribute('draggable', true);
         img.dataset.index = i;
@@ -154,7 +154,7 @@ function updateCoinsDisplay(start = 0, count = coins.length) {
     for (let i = start; i < Math.min(coins.length, start + count); i++) {
         imgs[i].classList.add('flip');
         setTimeout(() => {
-            imgs[i].src = `assets/${coins[i]}.png`;
+        img.src = `assets/${side}.png`;
             imgs[i].classList.remove('flip');
         }, 200);
     }
