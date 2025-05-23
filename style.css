@@ -1,47 +1,104 @@
-/* Reset basic defaults */
+/* ===========================
+   Global & Layout Styles
+   =========================== */
+
+/* Reset basic defaults and set up base font and background */
 body, html {
     margin: 0;
     padding: 0;
     height: 100%;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #f0f4ff, #d9e9ff);
+    background: linear-gradient(135deg, #f0f4ff, #d9e9ff); /* Soft blue gradient */
     display: flex;
     flex-direction: column;
 }
+/* Animate a coin sliding to the end */
+.coin.move-to-end {
+    animation: moveToEnd 0.5s forwards;
+}
 
-/* Header styles */
+@keyframes moveToEnd {
+    0% { transform: translateX(0); opacity: 1; }
+    80% { opacity: 0.7; }
+    100% { transform: translateX(600px); opacity: 0; }
+}
+
+/* Add to your style.css */
+.coin.lift-move-end {
+    z-index: 2;
+    animation: liftMoveEnd 0.7s forwards;
+}
+
+@keyframes liftMoveEnd {
+    0%   { transform: translateY(0) scale(1); opacity: 1; }
+    20%  { transform: translateY(-40px) scale(1.1); }
+    80%  { transform: translateY(-40px) translateX(var(--move-x, 600px)) scale(1.1); opacity: 1; }
+    100% { transform: translateY(0) translateX(var(--move-x, 600px)) scale(1); opacity: 1; }
+}
+
+/* Lift the coin up higher */
+.coin.lift {
+    z-index: 6;
+    animation: liftUp 0.3s forwards;
+}
+
+@keyframes liftUp {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-80px) scale(1.15); } /* Lifted higher (was -40px) */
+}
+/* Drop the coin down at the end */
+.coin.drop {
+    z-index: 2;
+    animation: dropDown 0.3s forwards;
+}
+
+@keyframes dropDown {
+    0% { transform: translateY(-40px) scale(1.1); opacity: 1; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+/* ===========================
+   Header Styles
+   =========================== */
+
+/* Header bar styling */
 header {
-    background-color: #333;
-    color: white;
-    padding: 15px 30px;
+    background-color: #333;      /* Dark background */
+    color: white;                /* White text */
+    padding: 15px 30px;          /* Space around content */
     font-weight: bold;
     display: flex;
-        flex-direction: column;
-
+    flex-direction: column;      /* Stack title and controls vertically */
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
     font-size: 20px;
     letter-spacing: 1px;
-
-
+}
+.coin {
+    transition: transform 0.3s ease, left 0.3s ease;
 }
 
+/* Main game title styling */
 header h1 {
-   font-size: 56px;
+    font-size: 56px;
     font-weight: 900;
     margin: 0 0 18px 0;
     letter-spacing: 3px;
 }
 
-/* Controls styles */
+/* ===========================
+   Controls Styles
+   =========================== */
+
+/* Controls bar (goal selector, buttons, moves left) */
 .controls {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 15px;           /* Space between controls */
     margin-top: 10px;
 }
 
+/* Shared styles for select dropdowns and buttons */
 .controls select, .controls button {
     padding: 8px 12px;
     font-size: 16px;
@@ -49,23 +106,30 @@ header h1 {
     border: none;
 }
 
+/* Dropdown styling */
 .controls select {
     background-color: #ffffff;
     color: #333;
 }
 
+/* Button styling */
 .controls button {
-    background-color: #007bff;
+    background-color: #007bff;   /* Blue background */
     color: white;
     cursor: pointer;
     transition: background-color 0.2s ease;
 }
 
+/* Button hover effect */
 .controls button:hover {
     background-color: #0056b3;
 }
 
-/* Main game area */
+/* ===========================
+   Main Game Area
+   =========================== */
+
+/* Main area centers the coin container */
 main {
     flex-grow: 1;
     display: flex;
@@ -73,23 +137,27 @@ main {
     justify-content: center;
 }
 
-/* Coin container layout */
+/* ===========================
+   Coin Container & Coin Styles
+   =========================== */
+
+/* Layout for the coin row */
 #coinContainer {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
     gap: 15px;
-    width: 100vw;           /* Make it almost as wide as the viewport */
-    max-width: 1600px;     /* Optional: limit max width for very large screens */
-        height: 140px;          /* Set height as 30% of viewport height */
-    margin: 0 auto;        /* Center the container */
-    padding: 20px 0;       /* Reduce horizontal padding */
-    background-color: rgba(255, 255, 255, 0.9);
+    width: 100vw;           /* Nearly full viewport width */
+    max-width: 1600px;      /* Prevents stretching on huge screens */
+    height: 140px;          /* Fixed height for coins */
+    margin: 0 auto;         /* Center horizontally */
+    padding: 20px 0;        /* Vertical padding */
+    background-color: rgba(255, 255, 255, 0.9); /* White with slight transparency */
     border-radius: 15px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
-/* Coin styling */
+/* Coin image styling */
 .coin {
     width: 140px;
     height: 140px;
@@ -97,26 +165,33 @@ main {
     transition: transform 0.3s;
 }
 
+/* Coin click/active effect */
 .coin:active {
     transform: scale(1.2);
 }
 
+/* Coin flip animation class */
 .coin.flip {
     animation: flip 0.4s;
 }
 
+/* Keyframes for coin flip animation */
 @keyframes flip {
     0% { transform: rotateY(0); }
     100% { transform: rotateY(180deg); }
 }
 
-/* Endgame overlay */
+/* ===========================
+   Endgame Overlay Styles
+   =========================== */
+
+/* Overlay for win/lose message */
 #resultOverlay {
     position: fixed;
     top: 0; left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0,0,0,0.7);
+    background-color: rgba(0,0,0,0.7); /* Semi-transparent black */
     color: white;
     display: flex;
     flex-direction: column;
@@ -126,36 +201,44 @@ main {
     z-index: 1000;
 }
 
+/* Play Again button in overlay */
 #resultOverlay button {
     margin-top: 20px;
     padding: 12px 20px;
     font-size: 18px;
     border: none;
     border-radius: 6px;
-    background-color: #28a745;
+    background-color: #28a745; /* Green */
     color: white;
     cursor: pointer;
 }
 
+/* Play Again button hover effect */
 #resultOverlay button:hover {
     background-color: #218838;
 }
 
+/* Hide overlay when not needed */
 .hidden {
     display: none;
 }
 
-/* Confetti animation */
+/* ===========================
+   Confetti Animation Styles
+   =========================== */
+
+/* Confetti falling animation */
 @keyframes pop {
     0% { transform: translateY(0) rotate(0); opacity: 1; }
     100% { transform: translateY(400px) rotate(720deg); opacity: 0; }
 }
 
+/* Confetti element styling */
 .confetti {
     position: fixed;
     width: 10px;
     height: 10px;
-    background-color: red;
+    background-color: red; /* Will be overridden by JS for random color */
     top: -10px;
     animation: pop 3s ease-out forwards;
     z-index: 999;
