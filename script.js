@@ -41,7 +41,7 @@ function renderCoins() {
 
     coins.forEach((side, i) => {
         const img = document.createElement('img');
-        img.src = `${side}.png`;
+imgs[i].src = `${coins[i]}.png`;
         img.classList.add('coin');
         img.setAttribute('draggable', true);
         img.dataset.index = i;
