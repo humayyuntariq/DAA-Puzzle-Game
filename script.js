@@ -30,7 +30,8 @@ function initGame() {
     }
 
     renderCoins();
-    movesCount.textContent = maxMoves;
+updateCoinsDisplay(); // force initial image load
+movesCount.textContent = maxMoves;
 }
 
 
@@ -154,7 +155,7 @@ function updateCoinsDisplay(start = 0, count = coins.length) {
     for (let i = start; i < Math.min(coins.length, start + count); i++) {
         imgs[i].classList.add('flip');
         setTimeout(() => {
-        img.src = `assets/${side}.png`;
+            imgs[i].src = `assets/${coins[i]}.png`;
             imgs[i].classList.remove('flip');
         }, 200);
     }
