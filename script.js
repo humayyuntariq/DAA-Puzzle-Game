@@ -45,6 +45,7 @@ function initGame() {
 // Render the coins as images and set up their event handlers
 function renderCoins() {
     coinContainer.innerHTML = '';
+    
 
     coins.forEach((side, i) => {
         const img = document.createElement('img');
@@ -187,71 +188,185 @@ function moveCoin(from, to) {
 
 // Auto solve the puzzle using the selected algorithm
 function autoSolve(algorithm) {
-    if (algorithm === 1) solveAlgo1();
-    else solveAlgo2();
-
-    updateCoinsDisplay(); // Update UI to reflect solution
-    maxMoves = 0; // Set moves to 0 to end the game
-    movesCount.textContent = maxMoves;
-
-    checkGameStatus(); // Check if solved
-}
-
-// Algorithm 1: Flip segments to reach the goal state
-function solveAlgo1() {
-    let i = 0;
-    const goal = goalToggle.value;
-    while (i < coins.length) {
-        if (coins[i] !== goal) {
-            let j = i;
-            while (j < coins.length && coins[j] !== goal) {
-                coins[j] = goal;
-                j++;
-            }
-            i = j;
-        } else {
-            let j = i;
-            while (j < coins.length && coins[j] === goal) j++;
-            i = j;
-        }
+    if (algorithm === 1) {
+        solveAlgo1(); // Let solveAlgo1 handle its own animations and status check
+    } else {
+        solveAlgo2(); // Already handles its own animation and status check
     }
 }
 
-// Algorithm 2: Move all non-goal coins to the end, then flip them
 function solveAlgo2() {
-    let i = 0, m = coins.length - 1;
     const goal = goalToggle.value;
-    while (i <= m) {
-        if (coins[i] === goal) {
-            i++;
-        } else {
-            [coins[i], coins[m]] = [coins[m], coins[i]];
-            m--;
+    let current = 0;
+    
+    // Phase 1: Separation - move non-goal coins to the end
+    function separateCoins() {
+        // Find next non-goal coin
+        while (current < coins.length && coins[current] === goal) {
+            current++;
         }
+        
+        // If we've reached the end or all remaining coins are non-goal, start flipping phase
+        if (current >= coins.length) {
+            startFlippingPhase();
+            return;
+        }
+        
+        // Check if all remaining coins are non-goal (already separated)
+        let allRemainingAreNonGoal = true;
+        for (let i = current; i < coins.length; i++) {
+            if (coins[i] === goal) {
+                allRemainingAreNonGoal = false;
+                break;
+            }
+        }
+        
+        if (allRemainingAreNonGoal) {
+            startFlippingPhase();
+            return;
+        }
+        
+        // Skip if already at end
+        if (current === coins.length - 1) {
+            current++;
+            separateCoins();
+            return;
+        }
+        
+        // Animate moving this non-goal coin to the end
+        const imgs = document.querySelectorAll('.coin');
+        const coinNode = imgs[current];
+        
+        // Lift the coin up
+        coinNode.classList.add('lift');
+        
+        setTimeout(() => {
+            // After lift animation completes, REMOVE the class and use inline styles
+            coinNode.classList.remove('lift');
+            
+            // Maintain the lifted position with inline styles
+            coinNode.style.transition = 'none';
+            coinNode.style.transform = 'translateY(-80px) scale(1.15)';
+            coinNode.style.zIndex = '6';
+            
+            // Force reflow
+            void coinNode.offsetWidth;
+            
+            // Slide other coins left
+            for (let i = current + 1; i < imgs.length; i++) {
+                imgs[i].style.transition = 'transform 0.5s ease';
+                imgs[i].style.transform = `translateX(-${140 + 15}px)`;
+            }
+            
+            // After other coins slide, move the lifted coin to the end
+            setTimeout(() => {
+                // Calculate distance to end
+                const containerWidth = coinContainer.offsetWidth;
+                const coinWidth = coinNode.offsetWidth;
+                const gapWidth = 15;
+                const moveDistance = containerWidth - (current * (coinWidth + gapWidth)) - coinWidth;
+                
+                // Move horizontally while staying lifted
+                coinNode.style.transition = 'transform 0.8s ease';
+                coinNode.style.transform = `translateY(-80px) translateX(${moveDistance}px) scale(1.15)`;
+                
+                // Drop the coin at the end
+                setTimeout(() => {
+                    coinNode.style.transition = 'transform 0.4s ease'; 
+                    coinNode.style.transform = `translateX(${moveDistance}px)`;
+                    coinNode.style.zIndex = '2';
+                    
+                    // Update array after all animations
+                    setTimeout(() => {
+                        const [moved] = coins.splice(current, 1);
+                        coins.push(moved);
+                        renderCoins();
+                        
+                        // Continue to next coin (don't increment current since array changed)
+                        setTimeout(() => separateCoins(), 100);
+                    }, 400);
+                }, 800);
+            }, 500);
+        }, 350);
     }
-    for (let j = m + 1; j < coins.length; j++) {
-        coins[j] = goal;
+    
+    // Phase 2: Flipping - flip all non-goal coins at the end
+    function startFlippingPhase() {
+        let flipIndex = 0;
+        
+        function flipNextCoin() {
+            // Find next non-goal coin
+            while (flipIndex < coins.length && coins[flipIndex] === goal) {
+                flipIndex++;
+            }
+            
+            // If all coins are already goal, we're done
+            if (flipIndex >= coins.length) {
+                maxMoves = 0;
+                movesCount.textContent = maxMoves;
+                checkGameStatus();
+                return;
+            }
+            
+            // Flip this coin with animation
+            const imgs = document.querySelectorAll('.coin');
+            imgs[flipIndex].classList.add('flip');
+            
+            setTimeout(() => {
+                coins[flipIndex] = goal;
+                imgs[flipIndex].src = `assets/${goal}.png`;
+                imgs[flipIndex].classList.remove('flip');
+                
+                flipIndex++;
+                setTimeout(flipNextCoin, 300);
+            }, 200);
+        }
+        
+        // Start flipping coins
+        flipNextCoin();
     }
+    
+    // Start with the separation phase
+    separateCoins();
 }
 
-// Algorithm 1: Flip segments to reach the goal state
+
+
+// Algorithm 1: Simply flip all non-goal coins to goal
 function solveAlgo1() {
-    let i = 0;
     const goal = goalToggle.value;
-    while (i < coins.length) {
-        if (coins[i] !== goal) {
-            let j = i;
-            while (j < coins.length && coins[j] !== goal) {
-                coins[j] = goal;
-                j++;
-            }
-            i = j;
-        } else {
-            let j = i;
-            while (j < coins.length && coins[j] === goal) j++;
-            i = j;
+    let flipIndex = 0;
+    
+    function flipNextCoin() {
+        // Find next non-goal coin
+        while (flipIndex < coins.length && coins[flipIndex] === goal) {
+            flipIndex++;
         }
+        
+        // If all coins are already goal, we're done
+        if (flipIndex >= coins.length) {
+            maxMoves = 0;
+            movesCount.textContent = maxMoves;
+            checkGameStatus();
+            return;
+        }
+        
+        // Flip this coin with animation
+        const imgs = document.querySelectorAll('.coin');
+        imgs[flipIndex].classList.add('flip');
+        
+        setTimeout(() => {
+            coins[flipIndex] = goal;
+            imgs[flipIndex].src = `assets/${goal}.png`;
+            imgs[flipIndex].classList.remove('flip');
+            
+            flipIndex++;
+            setTimeout(flipNextCoin, 300); // Continue to next coin
+        }, 200);
     }
+    
+    // Start flipping coins
+    flipNextCoin();
 }
 
 function calculateMinMovesAlgo1() {
