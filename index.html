@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Heads or Tails Puzzle</title>
+    <link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css?family=Montserrat:700,900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <h1>Heads or Tails Puzzle</h1>
+        <div class="controls">
+            <label>
+                Goal:
+                <select id="goalToggle">
+                    <option value="heads">All Heads</option>
+                    <option value="tails">All Tails</option>
+                </select>
+            </label>
+            <button onclick="autoSolve(1)">Auto Solve Algo 1</button>
+            <button onclick="autoSolve(2)">Auto Solve Algo 2</button>
+            <p>Moves Left: <span id="movesCount">20</span></p>
+        </div>
+    </header>
+
+    <main>
+        <div id="coinContainer"></div>
+    </main>
+
+<script src="script.js" defer></script>
+   <div id="resultOverlay" class="hidden">
+    <div id="resultMessage"></div>
+</div>
+
+</div>
+    
+</div>
+
+</body>
+</html>
