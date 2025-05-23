@@ -1,42 +1,48 @@
+// Get references to DOM elements
 const coinContainer = document.getElementById('coinContainer');
 const movesCount = document.getElementById('movesCount');
 const goalToggle = document.getElementById('goalToggle');
-let coins = [];
-let maxMoves = 0;
-let draggedIndex = null;
 
-// Initialize the game
+// Game state variables
+let coins = [];         // Array holding the state ('heads' or 'tails') of each coin
+let maxMoves = 0;       // Number of moves left
+let draggedIndex = null; // For drag-and-drop functionality
+let minMoves = 0;       // Minimum moves required to solve the puzzle
+
+
+// Initialize the game state and UI
 function initGame() {
     const n = 10;
     maxMoves = n;
     coins = [];
 
+    // hide overlay and clear old data
     const overlay = document.getElementById("resultOverlay");
     if (overlay) {
         overlay.classList.add("hidden");
         overlay.style.display = "none";
-
-        // Optional: clean any dynamic buttons
         const oldBtn = overlay.querySelector("button");
         if (oldBtn) oldBtn.remove();
     }
 
-    // Remove any leftover confetti
     document.querySelectorAll('.confetti').forEach(c => c.remove());
 
-    // Generate new coin states
     for (let i = 0; i < n; i++) {
         coins.push(Math.random() < 0.5 ? 'heads' : 'tails');
     }
 
     renderCoins();
-updateCoinsDisplay(); // force initial image load
-movesCount.textContent = maxMoves;
+    updateCoinsDisplay();
+    movesCount.textContent = maxMoves;
+    updateMinMovesDisplay(); // 👈 Add this
+
+    minMoves = calculateMinMovesAlgo1();
+    updateMinMovesDisplay();
+
 }
 
 
-
-
+// Render the coins as images and set up their event handlers
 function renderCoins() {
     coinContainer.innerHTML = '';
 
@@ -47,16 +53,18 @@ function renderCoins() {
         img.setAttribute('draggable', true);
         img.dataset.index = i;
 
-        // Flip from this index to i + 2 (simulate flipping group of 3)
+        // When a coin is clicked, flip a group starting from this index
         img.onclick = () => {
             if (maxMoves > 0) {
-                flipGroup(i, 3); // flip 3 coins starting at i
+                flipGroup(i, 3); // flip 3 coins starting at i (if you want group flip)
                 maxMoves--;
+                minMoves--;
+                movesCount.textContent = minMoves;
                 movesCount.textContent = maxMoves;
             }
         };
 
-        // Drag events for rearranging
+        // Drag-and-drop handlers for rearranging coins
         img.ondragstart = (e) => {
             draggedIndex = i;
             e.target.classList.add('dragging');
@@ -71,34 +79,40 @@ function renderCoins() {
             moveCoin(draggedIndex, targetIndex);
         };
 
+        // When a coin is clicked, flip all consecutive coins of the same side from this index
         img.onclick = () => {
-         flipFromIndex(i);
+            flipFromIndex(i);
         };
 
         coinContainer.appendChild(img);
     });
 }
 
+// Flip all consecutive coins of the same side starting from a given index
 function flipFromIndex(index) {
     if (maxMoves <= 0) return;
 
     const targetSide = coins[index];
     let i = index;
 
-    // Flip all consecutive coins starting from index that have the same side
+    // Flip all consecutive coins with the same side
     while (i < coins.length && coins[i] === targetSide) {
         coins[i] = targetSide === 'heads' ? 'tails' : 'heads';
         i++;
     }
 
     maxMoves--;
-    movesCount.textContent = maxMoves;
-    updateCoinsDisplay(index, i - index);
+    minMoves--;
 
-    checkGameStatus(); // 🔥 This is critical
+    movesCount.textContent = maxMoves;
+    updateMinMovesDisplay(); // ✅ Update display on every move
+
+    updateCoinsDisplay(index, i - index);
+    checkGameStatus();
 }
 
 
+// Check if the player has won or lost after a move
 function checkGameStatus() {
     const goal = goalToggle.value;
     const allMatch = coins.every(c => c === goal);
@@ -110,17 +124,18 @@ function checkGameStatus() {
     }
 }
 
-
+// Show the endgame overlay with a message and confetti if won
 function showEndMessage(message, celebrate) {
     const overlay = document.getElementById("resultOverlay");
     const msg = document.getElementById("resultMessage");
 
     msg.innerText = message;
 
-    // Remove old button if any
+    // Remove old "Play Again" button if present
     const oldBtn = overlay.querySelector("button");
     if (oldBtn) oldBtn.remove();
 
+    // Add a new "Play Again" button
     const btn = document.createElement("button");
     btn.innerText = "Play Again";
     btn.onclick = initGame;
@@ -129,6 +144,7 @@ function showEndMessage(message, celebrate) {
     overlay.classList.remove("hidden");
     overlay.style.display = "flex";
 
+    // If celebrate is true, show confetti
     if (celebrate) {
         for (let i = 0; i < 100; i++) {
             createConfetti();
@@ -136,8 +152,7 @@ function showEndMessage(message, celebrate) {
     }
 }
 
-
-
+// Create a single confetti element and animate it
 function createConfetti() {
     const confetti = document.createElement("div");
     confetti.classList.add("confetti");
@@ -149,7 +164,7 @@ function createConfetti() {
     setTimeout(() => confetti.remove(), 3000);
 }
 
-
+// Animate coin flipping by updating their images
 function updateCoinsDisplay(start = 0, count = coins.length) {
     const imgs = document.querySelectorAll('.coin');
     for (let i = start; i < Math.min(coins.length, start + count); i++) {
@@ -161,7 +176,7 @@ function updateCoinsDisplay(start = 0, count = coins.length) {
     }
 }
 
-// Drag-and-drop coin movement
+// Move a coin from one position to another (drag-and-drop)
 function moveCoin(from, to) {
     if (from === to) return;
     const temp = coins[from];
@@ -170,20 +185,19 @@ function moveCoin(from, to) {
     renderCoins();
 }
 
-// Auto solve using the selected algorithm
+// Auto solve the puzzle using the selected algorithm
 function autoSolve(algorithm) {
     if (algorithm === 1) solveAlgo1();
     else solveAlgo2();
 
-    updateCoinsDisplay(); // reflect final state
-    maxMoves = 0; // force evaluation
+    updateCoinsDisplay(); // Update UI to reflect solution
+    maxMoves = 0; // Set moves to 0 to end the game
     movesCount.textContent = maxMoves;
 
-    checkGameStatus(); // 🔥 needed here
+    checkGameStatus(); // Check if solved
 }
 
-
-// Algorithm 1 (Flip segments to goal)
+// Algorithm 1: Flip segments to reach the goal state
 function solveAlgo1() {
     let i = 0;
     const goal = goalToggle.value;
@@ -203,7 +217,7 @@ function solveAlgo1() {
     }
 }
 
-// Algorithm 2 (Swap tails to the end then flip)
+// Algorithm 2: Move all non-goal coins to the end, then flip them
 function solveAlgo2() {
     let i = 0, m = coins.length - 1;
     const goal = goalToggle.value;
@@ -220,4 +234,58 @@ function solveAlgo2() {
     }
 }
 
+// Algorithm 1: Flip segments to reach the goal state
+function solveAlgo1() {
+    let i = 0;
+    const goal = goalToggle.value;
+    while (i < coins.length) {
+        if (coins[i] !== goal) {
+            let j = i;
+            while (j < coins.length && coins[j] !== goal) {
+                coins[j] = goal;
+                j++;
+            }
+            i = j;
+        } else {
+            let j = i;
+            while (j < coins.length && coins[j] === goal) j++;
+            i = j;
+        }
+    }
+}
+
+function calculateMinMovesAlgo1() {
+    const goal = goalToggle.value;
+    const tempCoins = [...coins];
+    let moves = 0;
+    let i = 0;
+    while (i < tempCoins.length) {
+        if (tempCoins[i] !== goal) {
+            let j = i;
+            while (j < tempCoins.length && tempCoins[j] !== goal) {
+                tempCoins[j] = goal;
+                j++;
+            }
+            moves++;
+            i = j;
+        } else {
+            let j = i;
+            while (j < tempCoins.length && tempCoins[j] === goal) j++;
+            i = j;
+        }
+    }
+    return moves;
+}
+
+function updateMinMovesDisplay() {
+    document.getElementById('minMovesCount').textContent = minMoves;
+}
+
+goalToggle.addEventListener('change', () => {
+    minMoves = calculateMinMovesAlgo1();
+    updateMinMovesDisplay();
+});
+
+
+// Start the game when the script loads
 initGame();
